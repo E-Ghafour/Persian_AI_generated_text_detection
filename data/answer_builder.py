@@ -18,32 +18,32 @@ def random_exapmle(example_names, dir_path):
     return exapmle
 
 def system_prompt_builder(example_names, example_path):
-    return system_content_prompt + '\n' + random_exapmle(example_names, example_path)
+    return (system_content_prompt + '\n' + random_exapmle(example_names, example_path))[:3800]
 
 def user_read_prompts(file_path):
     with open(file_path, 'r', encoding='utf8') as ff:
         prompts = ff.readlines()
-    return prompts
+    return [prompt for prompt in prompts if len(prompt)>3]
 
 def save_answers(answers, target_path):
     data = pd.DataFrame([answer.values() for answer in answers], columns=answers[0].keys())
-    data.to_csv(target_path)
+    data.to_csv(target_path, index=False)
 
-def answer_builder(folder_path, start_ind, end_ind, api_key, example_path, category):
+def answer_builder(question_path, start_ind, end_ind, api_key, example_path, category):
     openai.api_key = api_key
     example_names = os.listdir(example_path)
     answers = []
 
-    for i in tqdm(range(start_ind, end_ind), total=end_ind-start_ind):
+    for number_of_file in tqdm(range(start_ind, end_ind), total=end_ind-start_ind):
         answers = []
-        file_name = f'{i}.txt'
-        user_prompts = user_read_prompts(os.path.join(folder_path, file_name))
-        for prompt in user_prompts:
+        file_name = f'{number_of_file}.txt'
+        user_prompts = user_read_prompts(os.path.join(question_path, file_name))
+        for number_of_quesion, prompt in tqdm(enumerate(user_prompts), total=len(user_prompts)): 
             try:
-                system_prompt = system_prompt_builder(system_prompt_builder(
+                system_prompt = system_prompt_builder(
                     example_names=example_names,
                     example_path=example_path
-                ))
+                )
                 response = openai.ChatCompletion.create(
                         model="gpt-3.5-turbo",
                         messages=[
@@ -51,34 +51,45 @@ def answer_builder(folder_path, start_ind, end_ind, api_key, example_path, categ
                                 {"role": "user", "content": prompt},
                             ]
                 )
-                answer = list(response.choices[0].message.content)
+                answer = response.choices[0].message.content
+
                 answers.append({
-                    'id': i,
+                    'id': f'{number_of_file}.{number_of_quesion}',
                     'system_prompt': system_prompt,
-                    'user_prompt': user_prompts,
+                    'user_prompt': prompt,
                     'category': category,
                     'answer': answer
                 })
 
             except Exception as e:
-                print(f'An error occurred in {i+1}th iteration:', str(e))
-        save_answers(answers)
-        
+                print(f'An error occurred in {number_of_file}.{number_of_quesion}th iteration:', str(e))
+
+        save_answers(answers, f'{number_of_file}.csv')
+
+        if(number_of_file%10 == 0):
+            gc.collect()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--folder_path', type=str)
+    parser.add_argument('--question_path', type=str)
     parser.add_argument('--start_ind', type=int, default=0)
     parser.add_argument('--end_ind', type=int, default=71)
     parser.add_argument('--api_ind', type=int)
     parser.add_argument('--example_path', type=str)
     parser.add_argument('--category', type=str)
     args = parser.parse_args()
-    folder_path = args.folder_path
-    start_ind = args.start_id
-    end_ind = args.end_id
-    api_key = args.api_key
+    question_path = args.question_path
+    start_ind = args.start_ind
+    end_ind = args.end_ind
+    api_ind = args.api_ind
     example_path = args.example_path
     category = args.category
-    print(folder_path, start_ind, end_ind, api_dict[api_key], sep='\n')
-
+    answer_builder(
+        question_path=question_path,
+        start_ind=start_ind,
+        end_ind=end_ind,
+        api_key=api_dict[api_ind],
+        example_path=example_path,
+        category=category
+    )
