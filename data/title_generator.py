@@ -3,6 +3,7 @@ from tqdm import tqdm
 import openai
 import argparse
 from line_fixer import *
+from api_dict import api_dict
 
 def extract_topics(topic_path, api_key):
 
@@ -36,10 +37,6 @@ def extract_topics(topic_path, api_key):
 
 
 if __name__ == '__main__':
-    api_dict = {1: "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",
-                2: "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",
-                3: "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",
-                4: "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"}
     parser = argparse.ArgumentParser()
     parser.add_argument('--topics', type=str)
     parser.add_argument('--api_id', type=int)
