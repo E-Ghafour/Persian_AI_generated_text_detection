@@ -2,6 +2,7 @@ import os
 from tqdm import tqdm
 import openai
 import argparse
+from line_fixer import *
 
 def extract_topics(topic_path, api_key):
 
@@ -25,6 +26,7 @@ def extract_topics(topic_path, api_key):
                             ]
                     )
             output = list(response.choices[0].message.content.split('\n'))
+            output = fix_line(output)
             with open(os.path.join(directory_name, f'{i+1}.txt'), 'w', encoding='utf8') as file:
                 file.writelines(line.strip() + '\n' for line in output)
         
