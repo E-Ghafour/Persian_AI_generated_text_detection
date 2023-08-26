@@ -39,7 +39,7 @@ def extract_topics(topic_path, api_key):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--topics', type=str)
-    parser.add_argument('--api_id', type=int)
+    parser.add_argument('--api_ind', type=int)
     args = parser.parse_args()
     topic_path = args.topics
     api_id = args.api_id
