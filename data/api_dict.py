@@ -14,3 +14,5 @@ api_dict = {1: "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",
             14: "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",
             15: "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",
             }
+
+# these api keys are expired...
